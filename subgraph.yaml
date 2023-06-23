@@ -1,0 +1,47 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: BaseRegistrarImplementation
+    network: mainnet
+    source:
+      address: "0xFaC7BEA255a6990f749363002136aF6556b31e04"
+      abi: BaseRegistrarImplementation
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - ControllerAdded
+        - ControllerRemoved
+        - NameMigrated
+        - NameRegistered
+        - NameRenewed
+        - OwnershipTransferred
+        - Transfer
+        - Approval
+        - ApprovalForAll
+      abis:
+        - name: BaseRegistrarImplementation
+          file: ./abis/BaseRegistrarImplementation.json
+      eventHandlers:
+        - event: ControllerAdded(indexed address)
+          handler: handleControllerAdded
+        - event: ControllerRemoved(indexed address)
+          handler: handleControllerRemoved
+        - event: NameMigrated(indexed uint256,indexed address,uint256)
+          handler: handleNameMigrated
+        - event: NameRegistered(indexed uint256,indexed address,uint256)
+          handler: handleNameRegistered
+        - event: NameRenewed(indexed uint256,uint256)
+          handler: handleNameRenewed
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+      file: ./src/base-registrar-implementation.ts
