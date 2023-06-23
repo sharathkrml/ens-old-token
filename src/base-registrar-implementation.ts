@@ -1,88 +1,123 @@
 import { BigInt } from "@graphprotocol/graph-ts"
 import {
-  BaseRegistrarImplementation,
-  ControllerAdded,
-  ControllerRemoved,
-  NameMigrated,
-  NameRegistered,
-  NameRenewed,
-  OwnershipTransferred,
-  Transfer,
-  Approval,
-  ApprovalForAll
+    ControllerAdded,
+    ControllerRemoved,
+    NameMigrated as NameMigratedEvent,
+    NameRegistered as NameRegisteredEvent,
+    NameRenewed as NameRenewedEvent,
+    OwnershipTransferred as OwnershipTransferredEvent,
+    Transfer as TransferEvent,
 } from "../generated/BaseRegistrarImplementation/BaseRegistrarImplementation"
-import { ExampleEntity } from "../generated/schema"
+import {
+    Controller,
+    NameMigrated,
+    NameRegistered,
+    NameRenewed,
+    OwnershipTransferred,
+    Counter,
+    Transfer,
+} from "../generated/schema"
 
 export function handleControllerAdded(event: ControllerAdded): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
-
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
-
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.controller = event.params.controller
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.supportsInterface(...)
-  // - contract.getApproved(...)
-  // - contract.ens(...)
-  // - contract.transferPeriodEnds(...)
-  // - contract.ownerOf(...)
-  // - contract.MIGRATION_LOCK_PERIOD(...)
-  // - contract.balanceOf(...)
-  // - contract.owner(...)
-  // - contract.isOwner(...)
-  // - contract.available(...)
-  // - contract.previousRegistrar(...)
-  // - contract.GRACE_PERIOD(...)
-  // - contract.renew(...)
-  // - contract.nameExpires(...)
-  // - contract.controllers(...)
-  // - contract.baseNode(...)
-  // - contract.isApprovedForAll(...)
-  // - contract.register(...)
+    const controller = event.params.controller
+    let entity = Controller.load(controller.toHexString())
+    if (!entity) {
+        entity = new Controller(controller.toHexString())
+        entity.controller = controller
+        entity.createdAt = event.transaction.hash
+    } else {
+        throw new Error("Controller already added, " + controller.toHexString())
+    }
+    entity.save()
 }
 
-export function handleControllerRemoved(event: ControllerRemoved): void {}
+export function handleControllerRemoved(event: ControllerRemoved): void {
+    const controller = event.params.controller
+    let entity = Controller.load(controller.toHexString())
+    if (!entity) {
+        throw new Error("Controller should be already added, " + controller.toHexString())
+    } else {
+        entity.removedAt = event.transaction.hash
+    }
+    entity.save()
+}
 
-export function handleNameMigrated(event: NameMigrated): void {}
+export function handleNameMigrated(event: NameMigratedEvent): void {
+    let counter = getCounter("NameMigrated")
 
-export function handleNameRegistered(event: NameRegistered): void {}
+    let nameMigrated = new NameMigrated(counter.count.toString())
+    nameMigrated.index = counter.count
+    nameMigrated.hash = event.transaction.hash
+    nameMigrated.ensId = event.params.id
+    nameMigrated.owner = event.params.owner
+    nameMigrated.expires = event.params.expires
+    nameMigrated.save()
 
-export function handleNameRenewed(event: NameRenewed): void {}
+    counter.save()
+}
 
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
+export function handleNameRegistered(event: NameRegisteredEvent): void {
+    let counter = getCounter("NameRegistered")
 
-export function handleTransfer(event: Transfer): void {}
+    let nameRegistered = new NameRegistered(counter.count.toString())
+    nameRegistered.index = counter.count
+    nameRegistered.hash = event.transaction.hash
+    nameRegistered.ensId = event.params.id
+    nameRegistered.owner = event.params.owner
+    nameRegistered.expires = event.params.expires
+    nameRegistered.save()
 
-export function handleApproval(event: Approval): void {}
+    counter.save()
+}
 
-export function handleApprovalForAll(event: ApprovalForAll): void {}
+export function handleNameRenewed(event: NameRenewedEvent): void {
+    let counter = getCounter("NameRegistered")
+
+    let nameRenewed = new NameRenewed(counter.count.toString())
+    nameRenewed.index = counter.count
+    nameRenewed.hash = event.transaction.hash
+    nameRenewed.ensId = event.params.id
+    nameRenewed.expires = event.params.expires
+    nameRenewed.save()
+
+    counter.save()
+}
+
+export function handleOwnershipTransferred(event: OwnershipTransferredEvent): void {
+    let counter = getCounter("OwnershipTransferred")
+
+    let ownershipTransferred = new OwnershipTransferred(counter.count.toString())
+    ownershipTransferred.index = counter.count
+    ownershipTransferred.hash = event.transaction.hash
+
+    ownershipTransferred.previousOwner = event.params.previousOwner
+    ownershipTransferred.newOwner = event.params.newOwner
+    ownershipTransferred.save()
+
+    counter.save()
+}
+
+export function handleTransfer(event: TransferEvent): void {
+    let counter = getCounter("Transfer")
+
+    let transfer = new Transfer(counter.count.toString())
+    transfer.index = counter.count
+    transfer.hash = event.transaction.hash
+
+    transfer.from = event.params.from
+    transfer.to = event.params.to
+    transfer.tokenId = event.params.tokenId
+    transfer.save()
+
+    counter.save()
+}
+
+function getCounter(key: string): Counter {
+    let counter = Counter.load(key)
+    if (!counter) {
+        counter = new Counter(key)
+        counter.count = BigInt.fromI32(0)
+    }
+    counter.count = counter.count.plus(BigInt.fromI32(1))
+    return counter
+}
