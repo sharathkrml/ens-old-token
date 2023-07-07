@@ -40,3 +40,31 @@ dataSources:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
       file: BaseRegistrarImplementation/BaseRegistrarImplementation.wasm
+templates:
+  - name: ETHRegistrarController
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: ETHRegistrarController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - NameRegistered
+        - NameRenewed
+        - NewPriceOracle
+        - OwnershipTransferred
+      abis:
+        - name: ETHRegistrarController
+          file: ETHRegistrarController/abis/ETHRegistrarController.json
+      eventHandlers:
+        - event: NameRegistered(string,indexed bytes32,indexed address,uint256,uint256)
+          handler: handleNameRegistered
+        - event: NameRenewed(string,indexed bytes32,uint256,uint256)
+          handler: handleNameRenewed
+        - event: NewPriceOracle(indexed address)
+          handler: handleNewPriceOracle
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: templates/ETHRegistrarController/ETHRegistrarController.wasm

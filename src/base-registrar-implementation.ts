@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, ens } from "@graphprotocol/graph-ts"
 import {
     ControllerAdded,
     ControllerRemoved,
@@ -17,7 +17,7 @@ import {
     Counter,
     Transfer,
 } from "../generated/schema"
-
+import { ETHRegistrarController } from "../generated/templates"
 export function handleControllerAdded(event: ControllerAdded): void {
     const controller = event.params.controller
     let entity = Controller.load(controller.toHexString())
@@ -29,6 +29,8 @@ export function handleControllerAdded(event: ControllerAdded): void {
         throw new Error("Controller already added, " + controller.toHexString())
     }
     entity.save()
+
+    ETHRegistrarController.create(controller)
 }
 
 export function handleControllerRemoved(event: ControllerRemoved): void {

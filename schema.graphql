@@ -57,3 +57,46 @@ type Counter @entity {
     id: ID!
     count: BigInt!
 }
+
+# Controller events
+type ControllerOwnershipTransferred @entity {
+    id: ID!
+    address: Bytes!
+    index: BigInt!
+    hash: Bytes!
+
+    previousOwner: Bytes!
+    newOwner: Bytes!
+}
+
+type ControllerNewPriceOracle @entity {
+    id: ID!
+    address: Bytes!
+    index: BigInt!
+    hash: Bytes!
+
+    oracle: Bytes!
+}
+type ControllerNameRenewed @entity {
+    id: ID!
+    address: Bytes!
+    index: BigInt!
+    hash: Bytes!
+
+    name: String!
+    label: Bytes!
+    cost: BigInt!
+    expires: BigInt!
+}
+type ControllerNameRegistered @entity {
+    id: ID!
+    address: Bytes!
+    index: BigInt!
+    hash: Bytes!
+
+    name: String!
+    label: Bytes!
+    owner: Bytes!
+    cost: BigInt!
+    expires: BigInt!
+}
